@@ -7,19 +7,52 @@ import { SelectValue, SelectTrigger, SelectItem, SelectContent, Select } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { UploadButton } from "@/lib/uploadthing"
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Toaster, toast } from 'sonner'
 
 export function Dub() {
   const [file, setFile] = useState<String>("");
+  const [name, setName] = useState<String>("");
+  const [response, setResponse] = useState<String>("");
+  const [loading, setLoading] = useState<Boolean>(true);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    setLoading(true);
+    e.preventDefault();
+    console.log("File: ", file);
+
+    if (!file) {
+      console.log("Please upload a file");
+      return;
+    }
+
+    fetch("/api/tts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ file: file }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("Response: ", res);
+        setResponse(res.data.text);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.log("Error: ", err);
+        setLoading(false);
+      });
+  }
 
   return (
     <Card className="w-full bg-zinc-900">
+      <Toaster richColors expand={true} />
       <CardHeader>
         <CardTitle>Create a Dub</CardTitle>
       </CardHeader>
-
       <CardContent>
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="project-name">Dubbing Project Name (Optional)</Label>
@@ -56,7 +89,7 @@ export function Dub() {
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="source">Select a Source *</Label>
               <Tabs defaultValue="upload">
-                <TabsList className="flex bg-transparent">
+                <TabsList className="flex p-2 w-fit bg-transparent">
                   <TabsTrigger value="upload" className="px-4 py-2 rounded-t-lg">Upload</TabsTrigger>
                   <TabsTrigger value="youtube" className="px-4 py-2 rounded-t-lg">Youtube</TabsTrigger>
                 </TabsList>
@@ -66,16 +99,27 @@ export function Dub() {
                     <div className="text-center">
                       <UploadButton
                         endpoint="mediaPost"
-                        onClientUploadComplete={(res) => {
+                        onUploadProgress={(progress) => {
+                          // Do something with the progress
+                          console.log("Progress: ", progress);
+                        }}
+                        onClientUploadComplete={(res: any) => {
                           // Do something with the response
-                          console.log("Files: ", res);
+                          console.log("Response: ", res);
+                          toast.success("File uploaded successfully!");
+                          setName(res[0].name);
+                          setFile(res[0].url);
                         }}
                         onUploadError={(error: Error) => {
                           // Do something with the error.
                           alert(`ERROR! ${error.message}`);
                         }}
                       />
+                      {/* <input onChange={handleChange} type="file" id="upload" placeholder="Drop a file here..." /> */}
                       <p className="text-sm text-gray-500">Audio or Video file, up to 1GB or 15 minutes.</p>
+                      {
+                        name && <p className="text-sm text-gray-500">{name}</p>
+                      }
                     </div>
                   </div>
                 </TabsContent>
@@ -85,36 +129,17 @@ export function Dub() {
               </Tabs>
             </div>
           </div>
+          <CardFooter className="flex justify-between mt-8">
+            <Button variant="outline">Cancel</Button>
+            <Button type="submit" disabled={!loading} variant="destructive">Create</Button>
+          </CardFooter>
         </form>
       </CardContent>
-
-      <CardFooter className="flex justify-between">
-        <Button variant="outline">Cancel</Button>
-        <Button variant="destructive">Create</Button>
-      </CardFooter>
       <p className="text-sm text-gray-500 p-4">This dub will use 2000 characters per minute of audio.</p>
+      {
+        response && <p className="text-sm text-gray-500 p-4">{response}</p>
+      }
     </Card>
-  )
-}
 
-
-function IconCloudupload(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-      <path d="M12 12v9" />
-      <path d="m16 16-4-4-4 4" />
-    </svg>
   )
 }
