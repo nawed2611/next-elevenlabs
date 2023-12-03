@@ -15,8 +15,8 @@ export async function POST(req: Request) {
   console.log(file);
 
   // get blob from URL
-  const res1 = await fetch(file);
-  const blob = await res1.blob();
+  const blobResponse = await fetch(file);
+  const blob = await blobResponse.blob();
 
   console.log(blob);
 
