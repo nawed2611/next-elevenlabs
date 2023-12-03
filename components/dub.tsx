@@ -11,8 +11,8 @@ import { useRef, useState } from "react";
 import { Toaster, toast } from 'sonner'
 
 export function Dub() {
-  const [file, setFile] = useState<String>("");
-  const [name, setName] = useState<String>("");
+  const [file, setFile] = useState<any>("");
+  const [fileName, setFileName] = useState<String>("");
   const [response, setResponse] = useState<String>("");
   const [loading, setLoading] = useState<Boolean>(true);
 
@@ -46,7 +46,7 @@ export function Dub() {
   }
 
   return (
-    <Card className="w-full bg-zinc-900">
+    <Card className="w-[50vw] bg-zinc-900">
       <Toaster richColors expand={true} />
       <CardHeader>
         <CardTitle>Create a Dub</CardTitle>
@@ -90,13 +90,13 @@ export function Dub() {
               <Label htmlFor="source">Select a Source *</Label>
               <Tabs defaultValue="upload">
                 <TabsList className="flex p-2 w-fit bg-transparent">
-                  <TabsTrigger value="upload" className="px-4 py-2 rounded-t-lg">Upload</TabsTrigger>
-                  <TabsTrigger value="youtube" className="px-4 py-2 rounded-t-lg">Youtube</TabsTrigger>
+                  <TabsTrigger value="upload" className="px-4 py-2 rounded-lg">Upload</TabsTrigger>
+                  <TabsTrigger value="youtube" className="px-4 py-2 rounded-lg">Youtube</TabsTrigger>
                 </TabsList>
-                <TabsContent className="h-[20vh] w-[35vw]" value="upload">
-                  <div className="p-12 border-2 border-dashed rounded-lg flex justify-center items-center">
+                <TabsContent className="h-[20vh]" value="upload">
+                  <div className="p-12 border border-dashed rounded-lg flex justify-center items-center">
 
-                    <div className="text-center">
+                    <div className="items-center text-center">
                       <UploadButton
                         endpoint="mediaPost"
                         onUploadProgress={(progress) => {
@@ -107,7 +107,7 @@ export function Dub() {
                           // Do something with the response
                           console.log("Response: ", res);
                           toast.success("File uploaded successfully!");
-                          setName(res[0].name);
+                          setFileName(res[0].name);
                           setFile(res[0].url);
                         }}
                         onUploadError={(error: Error) => {
@@ -115,15 +115,22 @@ export function Dub() {
                           alert(`ERROR! ${error.message}`);
                         }}
                       />
-                      {/* <input onChange={handleChange} type="file" id="upload" placeholder="Drop a file here..." /> */}
                       <p className="text-sm text-gray-500">Audio or Video file, up to 1GB or 15 minutes.</p>
                       {
-                        name && <p className="text-sm text-gray-500">{name}</p>
+                        fileName && <p className="text-sm text-gray-500">{fileName}</p>
                       }
                     </div>
+                    {
+                      file &&
+                      <div className="flex items-center justify-center">
+                        <audio controls>
+                          <source src={file} type="audio/mp3" />
+                        </audio>
+                      </div>
+                    }
                   </div>
                 </TabsContent>
-                <TabsContent className="h-[20vh] w-[35vw]" value="youtube">
+                <TabsContent className="h-[20vh]" value="youtube">
                   <Input id="youtube-link" placeholder="Drop a YouTube Link here..." />
                 </TabsContent>
               </Tabs>
@@ -131,13 +138,13 @@ export function Dub() {
           </div>
           <CardFooter className="flex justify-between mt-8">
             <Button variant="outline">Cancel</Button>
-            <Button type="submit" disabled={!loading} variant="destructive">Create</Button>
+            <Button type="submit" disabled={!loading} variant="secondary">Create</Button>
           </CardFooter>
         </form>
       </CardContent>
       <p className="text-sm text-gray-500 p-4">This dub will use 2000 characters per minute of audio.</p>
       {
-        response && <p className="text-sm text-gray-500 p-4">{response}</p>
+        response && <p className="text-lg font-mono text-gray-500 p-4">{response}</p>
       }
     </Card>
 

@@ -11,22 +11,14 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const { file } = await req.json();
-
-  console.log(file);
-
-  // get blob from URL
   const blobResponse = await fetch(file);
   const blob = await blobResponse.blob();
-
-  console.log(blob);
 
   const formData = new FormData();
   formData.append("file", blob, "audio.wav");
   formData.append("model", "whisper-1");
 
-  console.log("fd", formData);
-
-  // speech to text
+  // speech-to-text
   const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
     headers: {
@@ -34,9 +26,12 @@ export async function POST(req: Request) {
     },
     body: formData,
   });
+
   const data = await res.json();
 
-  console.log(data);
+  const transcribed = data.text;
+
+  // text-to-speech
 
   return Response.json({ data });
 }
