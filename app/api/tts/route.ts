@@ -1,6 +1,11 @@
 import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
+import Replicate from "replicate";
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
 
 const speechFile = path.resolve("./speech.mp3");
 
@@ -17,7 +22,7 @@ export async function GET() {
   return Response.json({ data });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: Request, res: Response) {
   const { file, sourceLang, targetLang } = await req.json();
   const blobResponse = await fetch(file);
   const blob = await blobResponse.blob();
@@ -27,7 +32,7 @@ export async function POST(req: Request) {
   formData.append("model", "whisper-1");
   formData.append("language", sourceLang);
 
-  const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+  const res1 = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -35,7 +40,7 @@ export async function POST(req: Request) {
     body: formData,
   });
 
-  const data = await res.json();
+  const data = await res1.json();
   const transcribed = data.text;
 
   // convert text to target language
@@ -61,6 +66,4 @@ export async function POST(req: Request) {
 
   const buffer = Buffer.from(await mp3.arrayBuffer());
   await fs.promises.writeFile(speechFile, buffer);
-
-  return Response.json({ translated });
 }

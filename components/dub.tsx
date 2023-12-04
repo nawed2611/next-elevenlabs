@@ -8,7 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { UploadButton } from "@/lib/uploadthing"
 import { useRef, useState } from "react";
-import { Toaster, toast } from 'sonner'
+import { Toaster, toast } from 'sonner';
+import AudioPlayer from 'react-h5-audio-player';
+import 'react-h5-audio-player/lib/styles.css';
 
 export function Dub() {
   const [file, setFile] = useState<any>("");
@@ -17,6 +19,7 @@ export function Dub() {
   const [loading, setLoading] = useState<boolean>(true);
   const [sourceLang, setSourceLang] = useState<string>("auto-detect");
   const [targetLang, setTargetLang] = useState<string>("en");
+
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     setLoading(true);
@@ -42,12 +45,10 @@ export function Dub() {
     })
       .then((res) => res.json())
       .then((res) => {
-        console.log("Response: ", res);
-        setResponse(res.data.text);
+        console.log(res);
         setLoading(false);
       })
       .catch((err) => {
-        console.log("Error: ", err);
         toast.error("Something went wrong!");
         setLoading(false);
       });
@@ -90,6 +91,13 @@ export function Dub() {
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="es">Spanish</SelectItem>
                     <SelectItem value="fr">French</SelectItem>
+                    <SelectItem value="de">German</SelectItem>
+                    <SelectItem value="it">Italian</SelectItem>
+                    <SelectItem value="ja">Japanese</SelectItem>
+                    <SelectItem value="ko">Korean</SelectItem>
+                    <SelectItem value="pt">Portuguese</SelectItem>
+                    <SelectItem value="ru">Russian</SelectItem>
+                    <SelectItem value="zh">Chinese</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -114,6 +122,7 @@ export function Dub() {
                         onClientUploadComplete={(res: any) => {
                           // Do something with the response
                           console.log("Response: ", res);
+                          setLoading(false);
                           toast.success("File uploaded successfully!");
                           setFileName(res[0].name);
                           setFile(res[0].url);
@@ -128,14 +137,7 @@ export function Dub() {
                         fileName && <p className="text-sm text-gray-500">{fileName}</p>
                       }
                     </div>
-                    {
-                      file &&
-                      <div className="flex items-center justify-center">
-                        <audio controls className="w-full">
-                          <source src={file} type="audio/mp3" />
-                        </audio>
-                      </div>
-                    }
+
                   </div>
                 </TabsContent>
                 <TabsContent className="h-[20vh]" value="youtube">
@@ -144,16 +146,46 @@ export function Dub() {
               </Tabs>
             </div>
           </div>
-          <CardFooter className="flex justify-between mt-8">
+          {
+            file &&
+            <div className="flex items-center justify-center">
+              <h1 className="text-2xl font-bold text-gray-500">Preview</h1>
+              <AudioPlayer
+                autoPlay
+                className="mt-12 rounded"
+                showJumpControls={false}
+                hasDefaultKeyBindings={false}
+                layout="horizontal-reverse"
+                src={file}
+                onPlay={e => console.log("onPlay")}
+              // other props here
+
+              />
+            </div>
+          }
+
+          <CardFooter className="flex justify-between mt-12">
             <Button variant="outline">Cancel</Button>
             <Button type="submit" disabled={loading} variant="secondary">Create</Button>
           </CardFooter>
         </form>
       </CardContent>
       <p className="text-sm text-gray-500 p-4">This dub will use 2000 characters per minute of audio.</p>
-      {
-        response && <p className="text-lg font-mono text-gray-500 p-4">{response}</p>
-      }
+
+      <div className="p-4">
+        <h1 className="text-xl text-gray-500">Response</h1>
+        <AudioPlayer
+          autoPlay
+          className="mt-4 rounded"
+          showJumpControls={false}
+          hasDefaultKeyBindings={false}
+          layout="horizontal-reverse"
+          src="https://uploadthing.com/f/ebd6e18a-0c95-4131-93c3-7ba008c4c130-xsulec.wav"
+          onPlay={e => console.log("onPlay")}
+        // other props here
+
+        />
+      </div>
     </Card >
 
   )
