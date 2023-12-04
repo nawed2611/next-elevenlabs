@@ -12,17 +12,24 @@ import { Toaster, toast } from 'sonner'
 
 export function Dub() {
   const [file, setFile] = useState<any>("");
-  const [fileName, setFileName] = useState<String>("");
-  const [response, setResponse] = useState<String>("");
-  const [loading, setLoading] = useState<Boolean>(true);
+  const [fileName, setFileName] = useState<string>("");
+  const [response, setResponse] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [sourceLang, setSourceLang] = useState<string>("auto-detect");
+  const [targetLang, setTargetLang] = useState<string>("en");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     setLoading(true);
     e.preventDefault();
-    console.log("File: ", file);
+    console.log(file, sourceLang, targetLang);
+
+    if (sourceLang === targetLang) {
+      toast.error("Source and Target language cannot be the same");
+      return;
+    }
 
     if (!file) {
-      console.log("Please upload a file");
+      toast.error("Please upload a file");
       return;
     }
 
@@ -31,7 +38,7 @@ export function Dub() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ file: file }),
+      body: JSON.stringify({ file, sourceLang, targetLang }),
     })
       .then((res) => res.json())
       .then((res) => {
@@ -41,6 +48,7 @@ export function Dub() {
       })
       .catch((err) => {
         console.log("Error: ", err);
+        toast.error("Something went wrong!");
         setLoading(false);
       });
   }
@@ -56,12 +64,12 @@ export function Dub() {
           <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="project-name">Dubbing Project Name (Optional)</Label>
-              <Input id="project-name" placeholder="Untitled" />
+              <Input id="project-name" placeholder="Enter a name here..." />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="source-language">Source Language</Label>
-                <Select>
+                <Select defaultValue={sourceLang} onValueChange={(value) => setSourceLang(value)}>
                   <SelectTrigger id="source-language">
                     <SelectValue placeholder="Detect" />
                   </SelectTrigger>
@@ -74,7 +82,7 @@ export function Dub() {
               </div>
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="target-language">Target Language *</Label>
-                <Select>
+                <Select defaultValue={targetLang} onValueChange={(value) => setTargetLang(value)}>
                   <SelectTrigger id="target-language">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
@@ -123,7 +131,7 @@ export function Dub() {
                     {
                       file &&
                       <div className="flex items-center justify-center">
-                        <audio controls>
+                        <audio controls className="w-full">
                           <source src={file} type="audio/mp3" />
                         </audio>
                       </div>
@@ -131,14 +139,14 @@ export function Dub() {
                   </div>
                 </TabsContent>
                 <TabsContent className="h-[20vh]" value="youtube">
-                  <Input id="youtube-link" placeholder="Drop a YouTube Link here..." />
+                  <Input value={file} onChange={(e) => setFile(e.target.value)} id="youtube-link" placeholder="Drop a YouTube Link here..." />
                 </TabsContent>
               </Tabs>
             </div>
           </div>
           <CardFooter className="flex justify-between mt-8">
             <Button variant="outline">Cancel</Button>
-            <Button type="submit" disabled={!loading} variant="secondary">Create</Button>
+            <Button type="submit" disabled={loading} variant="secondary">Create</Button>
           </CardFooter>
         </form>
       </CardContent>
@@ -146,7 +154,7 @@ export function Dub() {
       {
         response && <p className="text-lg font-mono text-gray-500 p-4">{response}</p>
       }
-    </Card>
+    </Card >
 
   )
 }
