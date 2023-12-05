@@ -11,12 +11,14 @@ import { useRef, useState } from "react";
 import { Toaster, toast } from 'sonner';
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
+import Youtube from "react-youtube";
 
 export function Dub() {
   const [file, setFile] = useState<any>("");
+  const [yt, setYT] = useState<any>("");
   const [fileName, setFileName] = useState<string>("");
   const [response, setResponse] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [sourceLang, setSourceLang] = useState<string>("auto-detect");
   const [targetLang, setTargetLang] = useState<string>("en");
 
@@ -26,8 +28,18 @@ export function Dub() {
     e.preventDefault();
     console.log(file, sourceLang, targetLang);
 
+    if (!targetLang) {
+      toast.error("Please select a target language");
+      return;
+    }
+
     if (sourceLang === targetLang) {
       toast.error("Source and Target language cannot be the same");
+      return;
+    }
+
+    if (yt) {
+      handleYT(yt);
       return;
     }
 
@@ -46,6 +58,28 @@ export function Dub() {
       .then((res) => res.json())
       .then((res) => {
         console.log(res);
+        setResponse(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        toast.error("Something went wrong!");
+        setLoading(false);
+      });
+  }
+
+  const handleYT = (yt: string) => {
+    setLoading(true);
+
+    fetch("/api/yt", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ file: yt, sourceLang, targetLang }),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        console.log(res);
         setLoading(false);
       })
       .catch((err) => {
@@ -55,7 +89,7 @@ export function Dub() {
   }
 
   return (
-    <Card className="w-[50vw] bg-zinc-900">
+    <Card className="w-[40vw] bg-zinc-900">
       <Toaster richColors expand={true} />
       <CardHeader>
         <CardTitle>Create a Dub</CardTitle>
@@ -111,7 +145,6 @@ export function Dub() {
                 </TabsList>
                 <TabsContent className="h-[20vh]" value="upload">
                   <div className="p-12 border border-dashed rounded-lg flex justify-center items-center">
-
                     <div className="items-center text-center">
                       <UploadButton
                         endpoint="mediaPost"
@@ -141,50 +174,62 @@ export function Dub() {
                   </div>
                 </TabsContent>
                 <TabsContent className="h-[20vh]" value="youtube">
-                  <Input value={file} onChange={(e) => setFile(e.target.value)} id="youtube-link" placeholder="Drop a YouTube Link here..." />
+                  <Input value={yt} onChange={(e) =>
+                    setYT(e.target.value)
+                  } id="youtube-link" placeholder="Drop a YouTube Link here..." />
+                  {
+                    yt &&
+                    <div className="flex flex-col items-center justify-center">
+                      <h1 className="m-4 text-base text-gray-500">Preview</h1>
+                      <Youtube videoId={yt.match(/(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)[1]} />
+                    </div>
+                  }
                 </TabsContent>
               </Tabs>
             </div>
           </div>
           {
             file &&
-            <div className="flex items-center justify-center">
-              <h1 className="text-2xl font-bold text-gray-500">Preview</h1>
+            <div className="mt-12 flex flex-col items-center justify-center">
+              <h1 className="text-base font-bold text-gray-500">Preview</h1>
               <AudioPlayer
                 autoPlay
-                className="mt-12 rounded"
+                className="mt-2 rounded"
                 showJumpControls={false}
                 hasDefaultKeyBindings={false}
                 layout="horizontal-reverse"
                 src={file}
                 onPlay={e => console.log("onPlay")}
-              // other props here
-
               />
             </div>
           }
 
           <CardFooter className="flex justify-between mt-12">
             <Button variant="outline">Cancel</Button>
-            <Button type="submit" disabled={loading} variant="secondary">Create</Button>
+            <Button type="submit" variant="secondary">Create</Button>
           </CardFooter>
         </form>
       </CardContent>
       <p className="text-sm text-gray-500 p-4">This dub will use 2000 characters per minute of audio.</p>
-
+      {
+        loading && <div className="flex flex-col items-center justify-center"> <h1 className="text-base font-bold text-gray-500">Loading...</h1> </div>
+      }
       <div className="p-4">
-        <h1 className="text-xl text-gray-500">Response</h1>
-        <AudioPlayer
-          autoPlay
-          className="mt-4 rounded"
-          showJumpControls={false}
-          hasDefaultKeyBindings={false}
-          layout="horizontal-reverse"
-          src="https://uploadthing.com/f/ebd6e18a-0c95-4131-93c3-7ba008c4c130-xsulec.wav"
-          onPlay={e => console.log("onPlay")}
-        // other props here
-
-        />
+        {
+          response &&
+          <div className="flex flex-col items-center justify-center">
+            <h1 className="text-base font-bold text-gray-500">Response</h1>
+            <AudioPlayer
+              autoPlay
+              className="mt-2 rounded"
+              showJumpControls={false}
+              hasDefaultKeyBindings={false}
+              layout="horizontal-reverse"
+              src={response}
+              onPlay={e => console.log("onPlay")}
+            />
+          </div>
+        }
       </div>
     </Card >
 

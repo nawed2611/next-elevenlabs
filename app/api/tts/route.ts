@@ -1,25 +1,13 @@
 import OpenAI from "openai";
-import fs from "fs";
-import path from "path";
 import Replicate from "replicate";
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
-
-const speechFile = path.resolve("./speech.mp3");
-
 const openai = new OpenAI();
 
 export async function GET() {
-  const res = await fetch("https://data.mongodb-api.com/...", {
-    method: "GET",
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  const data = await res.json();
-  return Response.json({ data });
+  return Response.json({ data: "Hello" });
 }
 
 export async function POST(req: Request, res: Response) {
@@ -28,10 +16,13 @@ export async function POST(req: Request, res: Response) {
   const blob = await blobResponse.blob();
 
   const formData = new FormData();
-  formData.append("file", blob, "audio.wav");
+  formData.append("file", blob, "audio.mp3");
   formData.append("model", "whisper-1");
   formData.append("language", sourceLang);
 
+  console.log("formdata", formData);
+
+  // convert audio to text
   const res1 = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
     headers: {
@@ -42,6 +33,8 @@ export async function POST(req: Request, res: Response) {
 
   const data = await res1.json();
   const transcribed = data.text;
+
+  console.log("transcribed", transcribed);
 
   // convert text to target language
   const completion = await openai.chat.completions.create({
@@ -57,13 +50,26 @@ export async function POST(req: Request, res: Response) {
 
   const translated = completion.choices[0].message.content as string;
 
-  // convert text to audio
-  const mp3 = await openai.audio.speech.create({
-    model: "tts-1",
-    voice: "alloy",
-    input: translated,
-  });
+  console.log("translated", translated);
 
-  const buffer = Buffer.from(await mp3.arrayBuffer());
-  await fs.promises.writeFile(speechFile, buffer);
+  const output = await replicate.run(
+    "afiaka87/tortoise-tts:e9658de4b325863c4fcdc12d94bb7c9b54cbfe351b7ca1b36860008172b91c71",
+    {
+      input: {
+        text: translated,
+        voice_a: "custom_voice",
+        seed: 0,
+        preset: "fast",
+        custom_voice: file,
+      },
+    }
+  );
+
+  console.log(output);
+
+  return Response.json({
+    transcribed,
+    translated,
+    data: output,
+  });
 }
